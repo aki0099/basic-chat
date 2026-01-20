@@ -9,8 +9,8 @@ body {
   background: #1e1e2f;
   height: 100vh;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   color: white;
 }
 
@@ -33,7 +33,6 @@ body {
   margin-bottom: 12px;
   border-radius: 6px;
   border: none;
-  outline: none;
 }
 
 .card button {
