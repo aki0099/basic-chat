@@ -2,9 +2,9 @@ const socket = io({
   transports: ["websocket"]
 });
 
-/* =====================
+/* ======================
    PASSWORD SYSTEM
-===================== */
+====================== */
 
 const COMMON_PASSWORD = "chat123";
 
@@ -15,7 +15,7 @@ const chatContainer = document.getElementById("chat-container");
 const loginBtn = document.getElementById("login-btn");
 const loginPass = document.getElementById("login-pass");
 
-loginBtn.onclick = () => {
+loginBtn.addEventListener("click", () => {
   if (loginPass.value !== COMMON_PASSWORD) {
     alert("❌ Wrong password");
     return;
@@ -23,11 +23,11 @@ loginBtn.onclick = () => {
 
   loginContainer.classList.add("hidden");
   joinContainer.classList.remove("hidden");
-};
+});
 
-/* =====================
+/* ======================
    CHAT CODE (UNCHANGED)
-===================== */
+====================== */
 
 const joinBtn = document.getElementById("join-btn");
 const sendBtn = document.getElementById("send-btn");
@@ -39,17 +39,17 @@ const usersDiv = document.getElementById("users");
 const joinError = document.getElementById("join-error");
 
 // Join chat
-joinBtn.onclick = () => {
+joinBtn.addEventListener("click", () => {
   const username = usernameInput.value.trim();
   if (!username) return;
 
   socket.emit("join", username);
   joinContainer.classList.add("hidden");
   chatContainer.classList.remove("hidden");
-};
+});
 
 // Send message
-sendBtn.onclick = sendMessage;
+sendBtn.addEventListener("click", sendMessage);
 messageInput.addEventListener("keypress", e => {
   if (e.key === "Enter") sendMessage();
 });
@@ -67,18 +67,22 @@ socket.on("message", data => {
   addMessage(`${data.user}: ${data.text}`);
 });
 
+// User joined
 socket.on("user_joined", username => {
   addSystemMessage(`${username} joined`);
 });
 
+// User left
 socket.on("user_left", username => {
   addSystemMessage(`${username} left`);
 });
 
+// Update user list
 socket.on("users_list", users => {
   usersDiv.textContent = `Users (${users.length}/6): ${users.join(", ")}`;
 });
 
+// Room full
 socket.on("room_full", msg => {
   joinError.textContent = msg;
 });
