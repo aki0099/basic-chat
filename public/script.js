@@ -6,7 +6,7 @@ const socket = io({
    PASSWORD SYSTEM
 ====================== */
 
-const COMMON_PASSWORD = "chat123";
+const COMMON_PASSWORD = "sharma";
 
 const loginContainer = document.getElementById("login-container");
 const joinContainer = document.getElementById("join-container");
@@ -102,3 +102,4 @@ function addSystemMessage(text) {
   div.textContent = text;
   messagesDiv.appendChild(div);
 }
+
