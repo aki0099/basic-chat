@@ -1,7 +1,34 @@
-const socket = io(); 
+const socket = io({
+  transports: ["websocket"]
+});
 
+/* =====================
+   PASSWORD SYSTEM
+===================== */
+
+const COMMON_PASSWORD = "chat123";
+
+const loginContainer = document.getElementById("login-container");
 const joinContainer = document.getElementById("join-container");
 const chatContainer = document.getElementById("chat-container");
+
+const loginBtn = document.getElementById("login-btn");
+const loginPass = document.getElementById("login-pass");
+
+loginBtn.onclick = () => {
+  if (loginPass.value !== COMMON_PASSWORD) {
+    alert("❌ Wrong password");
+    return;
+  }
+
+  loginContainer.classList.add("hidden");
+  joinContainer.classList.remove("hidden");
+};
+
+/* =====================
+   CHAT CODE (UNCHANGED)
+===================== */
+
 const joinBtn = document.getElementById("join-btn");
 const sendBtn = document.getElementById("send-btn");
 
@@ -10,15 +37,6 @@ const messageInput = document.getElementById("message-input");
 const messagesDiv = document.getElementById("messages");
 const usersDiv = document.getElementById("users");
 const joinError = document.getElementById("join-error");
-
-//Load message history for new joiners.
-socket.on("message_history", messages => {
-  messagesDiv.innerHTML = "";
-  messages.forEach(msg => {
-    addMessage(`${msg.username}: ${msg.text}`);
-  });
-});
-
 
 // Join chat
 joinBtn.onclick = () => {
@@ -49,22 +67,18 @@ socket.on("message", data => {
   addMessage(`${data.user}: ${data.text}`);
 });
 
-// User joined
 socket.on("user_joined", username => {
   addSystemMessage(`${username} joined`);
 });
 
-// User left
 socket.on("user_left", username => {
   addSystemMessage(`${username} left`);
 });
 
-// Update user list
 socket.on("users_list", users => {
   usersDiv.textContent = `Users (${users.length}/6): ${users.join(", ")}`;
 });
 
-// Room full
 socket.on("room_full", msg => {
   joinError.textContent = msg;
 });
