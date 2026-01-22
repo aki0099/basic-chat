@@ -47,6 +47,17 @@ app.get("/", (req, res) => {
 });
 
 // =====================
+// AUTH USERS (ADDED)
+// =====================
+const ALLOWED_USERS = {
+  akhil: "Akhil@8421",
+  apoorva: "Apoorva#731",
+  nishant: "Nishant$554",
+  anshika: "Anshika!902",
+  vipul: "Vipul*618"
+};
+
+// =====================
 // Chat state
 // =====================
 const users = new Map();
@@ -58,25 +69,47 @@ const MAX_USERS = 6;
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  if (users.size >= MAX_USERS) {
-    socket.emit("room_full", "Chat room is full (max 6 users)");
-    socket.disconnect();
-    return;
-  }
+  socket.on("join", async ({ username, password }) => {
 
-  socket.on("join", async (username) => {
+    // 🔒 Validate ID
+    if (!ALLOWED_USERS[username]) {
+      socket.emit("auth_error", "Invalid user ID");
+      return;
+    }
+
+    // 🔒 Validate password
+    if (ALLOWED_USERS[username] !== password) {
+      socket.emit("auth_error", "Wrong password");
+      return;
+    }
+
+    // 🔒 Duplicate login check
+    if ([...users.values()].includes(username)) {
+      socket.emit("auth_error", "User already logged in");
+      return;
+    }
+
+    // 🔒 Max users check
+    if (users.size >= MAX_USERS) {
+      socket.emit("room_full", "Chat room is full (max 6 users)");
+      socket.disconnect();
+      return;
+    }
+
+    // ✅ Auth success
     users.set(socket.id, username);
 
+    socket.emit("auth_success", username);
     socket.broadcast.emit("user_joined", username);
     io.emit("users_list", Array.from(users.values()));
 
     // Load last 50 messages
-    const { rows } = await pool.query(
-      `SELECT username, text, created_at
-       FROM messages
-       ORDER BY created_at ASC
-       LIMIT 50`
-    );
+    const { rows } = await pool.query(`
+      SELECT username, text, created_at
+      FROM messages
+      ORDER BY created_at ASC
+      LIMIT 50
+    `);
 
     socket.emit("message_history", rows);
   });
