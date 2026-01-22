@@ -4,10 +4,8 @@
 const { Pool } = require("pg");
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production"
-    ? { rejectUnauthorized: false }
-    : false
+  connectionString: process.env.DATABASE_URL || "postgresql://user:pass@localhost:5432/chatdb",
+  ssl: false
 });
 
 async function initDB() {
@@ -23,6 +21,14 @@ async function initDB() {
 }
 
 // =====================
+// Allowed users with passwords
+// =====================
+const ALLOWED_USERS = {
+  akhil: "AKU123",
+  apoorva: "apu123"
+};
+
+// =====================
 // Server initialization
 // =====================
 const express = require("express");
@@ -34,10 +40,7 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  transports: ["websocket", "polling"],
-  cors: {
-    origin: "*"
-  }
+  cors: { origin: "*" }
 });
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -64,19 +67,34 @@ io.on("connection", (socket) => {
     return;
   }
 
-  socket.on("join", async (username) => {
+  socket.on("join", async ({ username, password }) => {
+
+    if (!ALLOWED_USERS[username]) {
+      socket.emit("join_error", "Username not allowed");
+      return;
+    }
+
+    if (ALLOWED_USERS[username] !== password) {
+      socket.emit("join_error", "Wrong password");
+      return;
+    }
+
+    if ([...users.values()].includes(username)) {
+      socket.emit("join_error", "User already logged in");
+      return;
+    }
+
     users.set(socket.id, username);
 
     socket.broadcast.emit("user_joined", username);
     io.emit("users_list", Array.from(users.values()));
 
-    // Load last 50 messages
-    const { rows } = await pool.query(
-      `SELECT username, text, created_at
-       FROM messages
-       ORDER BY created_at ASC
-       LIMIT 50`
-    );
+    const { rows } = await pool.query(`
+      SELECT username, text, created_at
+      FROM messages
+      ORDER BY created_at ASC
+      LIMIT 50
+    `);
 
     socket.emit("message_history", rows);
   });
@@ -106,26 +124,17 @@ io.on("connection", (socket) => {
     users.delete(socket.id);
     socket.broadcast.emit("user_left", username);
     io.emit("users_list", Array.from(users.values()));
-
-    console.log("User disconnected:", socket.id);
   });
 });
 
 // =====================
-// Start server AFTER DB
+// Start server
 // =====================
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 (async () => {
-  try {
-    console.log("Connecting to PostgreSQL...");
-    await initDB();
-
-    server.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error("Startup error:", err);
-    process.exit(1);
-  }
+  await initDB();
+  server.listen(PORT, () => {
+    console.log("Server running on port", PORT);
+  });
 })();
