@@ -2,23 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat App</title>
+  <title>Private Chat App</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- PASSWORD SCREEN -->
-  <div id="login-container" class="card">
-    <h2>🔐 Enter Password</h2>
-    <input id="login-pass" type="password" placeholder="Common Password" />
-    <button id="login-btn">Enter</button>
-  </div>
+  <!-- JOIN / LOGIN SCREEN -->
+  <div id="join-container" class="card">
+    <h2>🔐 Private Chat Login</h2>
 
-  <!-- JOIN SCREEN -->
-  <div id="join-container" class="card hidden">
-    <h2>💬 Join Chat</h2>
-    <input id="username" placeholder="Enter your name" />
-    <button id="join-btn">Join</button>
+    <input id="username" placeholder="Username" />
+    <input id="password" type="password" placeholder="Password" />
+
+    <button id="join-btn">Join Chat</button>
     <p id="join-error"></p>
   </div>
 
@@ -41,6 +37,7 @@
 
   </div>
 
+  <!-- SOCKET.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="script.js"></script>
 </body>
