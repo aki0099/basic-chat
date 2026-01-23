@@ -1,6 +1,12 @@
+// ======================
+// SOCKET CONNECTION (POLLING ONLY)
+// ======================
 const socket = io({
-  transports: ["websocket"]
+  transports: ["polling"],   // 🔥 websocket bilkul band
+  upgrade: false
 });
+
+console.log("Client script loaded");
 
 // ======================
 // ELEMENTS
@@ -27,16 +33,21 @@ joinBtn.addEventListener("click", () => {
   const password = passwordInput.value.trim();
 
   if (!username || !password) {
-    joinError.textContent = "Username & password required";
+    joinError.textContent = "❌ Username & password required";
     return;
   }
 
+  joinError.textContent = "⏳ Connecting...";
   socket.emit("join", { username, password });
 });
 
 // ======================
 // SERVER RESPONSES
 // ======================
+socket.on("connect", () => {
+  console.log("Connected to server:", socket.id);
+});
+
 socket.on("auth_error", msg => {
   joinError.textContent = "❌ " + msg;
 });
@@ -45,10 +56,21 @@ socket.on("room_full", msg => {
   joinError.textContent = msg;
 });
 
-socket.on("message_history", () => {
-  // ✅ LOGIN SUCCESS → OPEN CHAT
+socket.on("connect_error", err => {
+  joinError.textContent = "Connection error: " + err.message;
+});
+
+// ✅ LOGIN SUCCESS
+socket.on("message_history", history => {
+  // show chat
   joinContainer.classList.add("hidden");
   chatContainer.classList.remove("hidden");
+
+  messagesDiv.innerHTML = "";
+
+  history.forEach(m => {
+    addMessage(`${m.username}: ${m.text}`);
+  });
 });
 
 // ======================
@@ -102,4 +124,5 @@ function addSystemMessage(text) {
   div.className = "message system";
   div.textContent = text;
   messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
