@@ -7,32 +7,37 @@
 </head>
 <body>
 
-  <!-- JOIN / LOGIN SCREEN -->
-  <div id="join-container" class="card">
-    <h2>🔐 Private Chat Login</h2>
+  <!-- BACKGROUND IMAGE SECTION -->
+  <div class="https://png.pngtree.com/thumb_back/fh260/background/20230618/pngtree-light-blue-background-3d-rendered-chat-application-interface-image_3635696.jpg">
 
-    <input id="username" placeholder="Username" />
-    <input id="password" type="password" placeholder="Password" />
+    <!-- JOIN / LOGIN SCREEN -->
+    <div id="join-container" class="card">
+      <h2>🔐 Private Chat Login</h2>
 
-    <button id="join-btn">Join Chat</button>
-    <p id="join-error"></p>
-  </div>
+      <input id="username" placeholder="Username" />
+      <input id="password" type="password" placeholder="Password" />
 
-  <!-- CHAT SCREEN -->
-  <div id="chat-container" class="hidden chat-layout">
-
-    <div class="sidebar">
-      <h3>Online Users</h3>
-      <div id="users"></div>
+      <button id="join-btn">Join Chat</button>
+      <p id="join-error"></p>
     </div>
 
-    <div class="chat-area">
-      <div id="messages"></div>
+    <!-- CHAT SCREEN -->
+    <div id="chat-container" class="hidden chat-layout">
 
-      <div id="input-area">
-        <input id="message-input" placeholder="Type a message..." />
-        <button id="send-btn">Send</button>
+      <div class="sidebar">
+        <h3>Online Users</h3>
+        <div id="users"></div>
       </div>
+
+      <div class="chat-area">
+        <div id="messages"></div>
+
+        <div id="input-area">
+          <input id="message-input" placeholder="Type a message..." />
+          <button id="send-btn">Send</button>
+        </div>
+      </div>
+
     </div>
 
   </div>
