@@ -35,9 +35,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   transports: ["websocket", "polling"],
-  cors: {
-    origin: "*"
-  }
+  cors: { origin: "*" }
 });
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -45,6 +43,18 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
+// =====================
+// FIXED 6 USERS (ID + PASSWORD)
+// =====================
+const allowedUsers = {
+  akhil: "111",
+  rohan: "222",
+  aman: "333",
+  rahul: "444",
+  sunny: "555",
+  vicky: "666"
+};
 
 // =====================
 // Chat state
@@ -58,45 +68,77 @@ const MAX_USERS = 6;
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  if (users.size >= MAX_USERS) {
-    socket.emit("room_full", "Chat room is full (max 6 users)");
-    socket.disconnect();
-    return;
-  }
+  socket.on("join", async ({ username, password }) => {
+    try {
+      // ❌ User allowed nahi
+      if (!allowedUsers[username]) {
+        socket.emit("auth_error", "You are not allowed");
+        socket.disconnect();
+        return;
+      }
 
-  socket.on("join", async (username) => {
-    users.set(socket.id, username);
+      // ❌ Password galat
+      if (allowedUsers[username] !== password) {
+        socket.emit("auth_error", "Wrong password");
+        socket.disconnect();
+        return;
+      }
 
-    socket.broadcast.emit("user_joined", username);
-    io.emit("users_list", Array.from(users.values()));
+      // ❌ Same user already online
+      if ([...users.values()].includes(username)) {
+        socket.emit("auth_error", "User already online");
+        socket.disconnect();
+        return;
+      }
 
-    // Load last 50 messages
-    const { rows } = await pool.query(
-      `SELECT username, text, created_at
-       FROM messages
-       ORDER BY created_at ASC
-       LIMIT 50`
-    );
+      // ❌ Room full
+      if (users.size >= MAX_USERS) {
+        socket.emit("room_full", "Chat room is full (max 6 users)");
+        socket.disconnect();
+        return;
+      }
 
-    socket.emit("message_history", rows);
+      // ✅ LOGIN SUCCESS
+      users.set(socket.id, username);
+      console.log(`${username} joined`);
+
+      socket.broadcast.emit("user_joined", username);
+      io.emit("users_list", Array.from(users.values()));
+
+      // Load last 50 messages
+      const { rows } = await pool.query(`
+        SELECT username, text, created_at
+        FROM messages
+        ORDER BY created_at ASC
+        LIMIT 50
+      `);
+
+      socket.emit("message_history", rows);
+    } catch (err) {
+      console.error("Join error:", err);
+    }
   });
 
   socket.on("message", async (msg) => {
     const username = users.get(socket.id);
     if (!username) return;
 
-    const result = await pool.query(
-      `INSERT INTO messages (username, text)
-       VALUES ($1, $2)
-       RETURNING created_at`,
-      [username, msg]
-    );
+    try {
+      const result = await pool.query(
+        `INSERT INTO messages (username, text)
+         VALUES ($1, $2)
+         RETURNING created_at`,
+        [username, msg]
+      );
 
-    io.emit("message", {
-      user: username,
-      text: msg,
-      time: result.rows[0].created_at
-    });
+      io.emit("message", {
+        user: username,
+        text: msg,
+        time: result.rows[0].created_at
+      });
+    } catch (err) {
+      console.error("Message error:", err);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -107,7 +149,7 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("user_left", username);
     io.emit("users_list", Array.from(users.values()));
 
-    console.log("User disconnected:", socket.id);
+    console.log("User disconnected:", username);
   });
 });
 
