@@ -48,12 +48,11 @@ app.get("/", (req, res) => {
 // FIXED 6 USERS (ID + PASSWORD)
 // =====================
 const allowedUsers = {
-  akhil: "111",
-  rohan: "222",
-  aman: "333",
-  rahul: "444",
-  sunny: "555",
-  vicky: "666"
+  akhil: "007",
+  apoorva: "015",
+  aman: "000",
+  himanshu: "106",
+  
 };
 
 // =====================
